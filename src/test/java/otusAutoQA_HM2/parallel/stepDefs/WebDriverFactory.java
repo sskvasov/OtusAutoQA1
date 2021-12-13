@@ -1,4 +1,4 @@
-package otusAutoQA_HM1;
+package otusAutoQA_HM2.parallel.stepDefs;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.chrome.ChromeDriver;
