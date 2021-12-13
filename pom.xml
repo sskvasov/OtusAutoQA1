@@ -10,10 +10,6 @@
     <properties>
         <aspectj.version>1.8.10</aspectj.version>
         <java-version>11</java-version>
-<!--        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
-<!--        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>-->
-<!--        <file.encoding>UTF-8</file.encoding>-->
-        <!--        <system.threads>1</system.threads>-->
     </properties>
     <build>
         <plugins>
@@ -39,6 +35,12 @@
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>4.4.0</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
