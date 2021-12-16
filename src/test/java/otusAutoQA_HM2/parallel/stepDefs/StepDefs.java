@@ -96,11 +96,9 @@ public class StepDefs {
         List<WebElement> courses = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-title lessons\")]"));
         List<WebElement> price = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-price\")]"));
         Map<String, Integer> coursesMap = new HashMap<>();
-        List<Map<String, Integer>> coursesList = new ArrayList<>();
 
         for (int i = 0; i < courses.size(); i++) {
             coursesMap.put(courses.get(i).getText(), Integer.parseInt(price.get(i).getText().replace(" ₽", "")));
-            coursesList.add(coursesMap);
         }
 //        System.out.println("coursesMap " + coursesMap);
         Map.Entry<String, Integer> println = coursesMap.entrySet()
