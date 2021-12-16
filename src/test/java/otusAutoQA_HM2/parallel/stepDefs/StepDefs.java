@@ -1,137 +1,129 @@
 package otusAutoQA_HM2.parallel.stepDefs;
 
-import config.TestConfig;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.cucumber.java.en.Given;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.events.EventFiringWebDriver;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
-import static java.util.Comparator.comparingInt;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
 public class StepDefs {
 
-    private EventFiringWebDriver driver;
-
-    @Given("^открываю браузер \"([^\"]*)\"$")
-    public void openChrome(String browser) {
-//        driver = new WebDriverFactory(TestConfig.getInstance().getBrowser()).createDriver();
-        driver = new WebDriverFactory(browser).createDriver();
-        System.setProperty("video.folder", "target/video");
-        System.setProperty("video.save.mode", "ALL");
-
-        driver.register(new Highlighter());
-        driver.manage().window().setSize(new Dimension(1366, 768));
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-        driver.navigate().to("https://otus.ru/");
-
-    }
-
-    @Given("^найти на странице курс \"([^\"]*)\"$")
-    public void findCourseOnPage(String course) {
-        List<WebElement> webElements = driver.findElements(By.xpath("//*[contains(@class,'lessons__new-item-title ') and contains(text(),'" + course + "')]"));
-        System.out.println(course);
-        new Actions(driver)
-                .moveToElement(webElements.get(0))
-                .click()
-                .build()
-                .perform();
-    }
-
-    @Given("^нахожу курс, который начинается после даты \"([^\"]*)\"$")
-    public void findCoursesAfterDate(String date) throws ParseException {
-        List<WebElement> courses = driver.findElements(By.xpath("//*[contains(@href,\"/lessons/\")]/descendant::*[contains(@class,\"lessons__new-item-title lessons\")]"));
-        List<WebElement> beginDate = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-start\")]"));
-        Date afterDate = formatDate(date);
-        Map<String, Date> map = new HashMap<>();
-        List<Map<String, Date>> list = new ArrayList<>();
-        for (int i = 0; i < courses.size(); i++) {
-            map.put(courses.get(i).getText(), formatDate(beginDate.get(i).getText().replace("С ","")));
-            list.add(map);
-       }
-        Map<String, Date> filtredMap = new HashMap<>();
-
-        list.stream().filter(x-> {
-            long count = 0L;
-            for (Map.Entry<String, Date> entry : x.entrySet()) {
-                if (entry.getValue().after(afterDate)) {
-                    filtredMap.put(entry.getKey(),entry.getValue());
-                    count++;
-                }
-            }
-            return false;
-        }).forEach(System.out::println);
-        System.out.println("filtredMap "+filtredMap);
-        findCourseOnPage(filtredMap.keySet().stream().findAny().get().toString());
-    }
-
-    public Date formatDate(String date) throws ParseException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM");
-        Date date1 = dateFormat.parse(date);
-        DateFormat dateFormat1;
-        dateFormat1 = new SimpleDateFormat("dd.MM");
-        date = dateFormat1.format(date1);
-        System.out.println("date " + date1);
-        return date1;
-    }
-
-    public void getCourses() {
-        List<WebElement> prices = driver.findElements(By.xpath("//*[@class=\"lessons__new-item-price\"]"));
-
-    }
-
-    @Given("^перейти в раздел Курсы > Подготовительные курсы и сделать фильтр по дорогим курсам$")
-    public void filterExpensiveCourse() {
-        WebElement webElement = driver.findElement(By.xpath("(//p[@class=\"header2-menu__item-text\" and text()='Курсы'])[1]"));
-        webElement.click();
-        webElement.findElement(By.xpath("./following::*[@title=\"Подготовительные курсы\"][1]")).click();
-        List<WebElement> courses = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-title lessons\")]"));
-        List<WebElement> price = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-price\")]"));
-        Map<String,Integer> coursesMap = new HashMap<>();
-
-        for (int i = 0; i < courses.size(); i++) {
-            coursesMap.put(courses.get(i).getText(), Integer.parseInt(price.get(i).getText().replace(" ₽","")));
-        }
-//        System.out.println("coursesMap " + coursesMap);
-        Map.Entry<String,Integer> println = coursesMap.entrySet()
-                .stream()
-                .max(comparingInt(Map.Entry::getValue)).get();
-//        System.out.println("println "+println);
-        findCourseOnPage(println.getKey());
-    }
-
-    @Given("^перейти в раздел Курсы > Подготовительные курсы и сделать фильтр по дешевым курсам$")
-    public void filterCheapCourse() {
-        WebElement webElement = driver.findElement(By.xpath("(//p[@class=\"header2-menu__item-text\" and text()='Курсы'])[1]"));
-        webElement.click();
-        webElement.findElement(By.xpath("./following::*[@title=\"Подготовительные курсы\"][1]")).click();
-        List<WebElement> courses = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-title lessons\")]"));
-        List<WebElement> price = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-price\")]"));
-        Map<String,Integer> coursesMap = new HashMap<>();
-
-        for (int i = 0; i < courses.size(); i++) {
-            coursesMap.put(courses.get(i).getText(), Integer.parseInt(price.get(i).getText().replace(" ₽","")));
-        }
-//        System.out.println("coursesMap " + coursesMap);
-        Map.Entry<String,Integer> println = coursesMap.entrySet()
-                .stream()
-                .min(comparingInt(Map.Entry::getValue)).get();
-//        System.out.println("println "+println);
-        findCourseOnPage(println.getKey());
-    }
-
-    @Given("^закрываем браузер")
+    private RequestSpecification requestSpecification;
+    WireMockServer wireMockServer;
+    @Given("^Останавливаем сервер с заглушкой")
     public void teardown() {
-        if (driver != null) {
-            driver.quit();
-        }
+        wireMockServer.stop();
     }
+    @Given("^Поднимаем сервер с заглушкой$")
+    public void setupClass() {
+        wireMockServer = new WireMockServer(options().port(8089));
+        wireMockServer.start();
+        configureFor("localhost", 8089);
+        stubFor(get(urlMatching("/user/get/([0-9]*)"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withTransformers("response-template")
+                        .withBody("{\n" +
+                                " \"name\":\"Test user\",\n" +
+                                " \"course\":\"QA\",\n" +
+                                "  \"email\":\"test@test.test\"\n" +
+                                "  \"age\": 23\n" +
+                                "}")));
+
+        stubFor(get(urlMatching("/user/get/all"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withTransformers("response-template")
+                        .withBody("[\n" +
+                                " {\n" +
+                                " \"name\":\"Test user\",\n" +
+                                " \"course\":\"QA\",\n" +
+                                "  \"email\":\"test@test.test\"\n" +
+                                "  \"age\": 23\n" +
+                                " },\n" +
+                                " {\n" +
+                                " \"name\":\"Test user 2\",\n" +
+                                " \"course\":\"SQA\",\n" +
+                                "  \"email\":\"test2@test.ru\"\n" +
+                                "  \"age\": 25\n" +
+                                " }\n" +
+                                "]")));
+
+        stubFor(get(urlMatching("/course/get/all"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withTransformers("response-template")
+                        .withBody("[\n" +
+                                " {\n" +
+                                "   \"name\":\"QA java\",\n" +
+                                "  \"price\": 15000\n" +
+                                " },\n" +
+                                " {\n" +
+                                "  \"name\":\"Java\",\n" +
+                                "   \"price\": 12000\n" +
+                                " }\n" +
+                                "]")));
+
+
+        stubFor(get(urlMatching("/get/grade"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withTransformers("response-template")
+                        .withBody("{\n" +
+                                "  \"name\":\"Test user\",\n" +
+                                "  \"score\": 78 \n" +
+                                "}")));
+
+
+        requestSpecification = RestAssured.given().log().all();
+        requestSpecification.baseUri("http://localhost:8089/");
+    }
+
+    @Given("Получить данные всех пользователей")
+    public void getAllUsers() {
+        requestSpecification.basePath("/user/get/all");
+        requestSpecification.contentType("application/json");
+        requestSpecification.when().get().then().statusCode(200);
+        Response response = requestSpecification.when().get();
+        response.body().prettyPrint();
+    }
+
+    @Given("^Получить данные о всех курсах$")
+    public void getAllCourses() {
+        requestSpecification.basePath("/course/get/all");
+        requestSpecification.contentType("application/json");
+        requestSpecification.when().get().then().statusCode(200);
+        Response response = requestSpecification.when().get();
+        response.body().prettyPrint();
+    }
+
+    @Given("^Получить данные об оценке$")
+    public void getGrade() {
+        requestSpecification.basePath("/get/grade");
+        requestSpecification.contentType("application/json");
+        requestSpecification.when().get().then().statusCode(200);
+        Response response = requestSpecification.when().get();
+        response.body().prettyPrint();
+    }
+
+    @Given("^Получить данные одного пользователя$")
+    public void getUser_1() {
+        requestSpecification.basePath("/user/get/1");
+        requestSpecification.contentType("application/json");
+        requestSpecification.when().get().then().statusCode(200);
+        Response response = requestSpecification.when().get();
+        response.body().prettyPrint();
+    }
+
 
 }
