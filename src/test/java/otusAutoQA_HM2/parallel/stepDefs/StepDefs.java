@@ -1,6 +1,7 @@
 package otusAutoQA_HM2.parallel.stepDefs;
 
-import config.TestConfig;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -13,6 +14,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingInt;
 
@@ -20,9 +22,20 @@ public class StepDefs {
 
     private EventFiringWebDriver driver;
 
+    @Before
+    public void beforeScenario() {
+        System.out.println("This will run before the Scenario");
+    }
+
+    @After
+    public void afterScenario() {
+        if (driver != null) {
+            driver.quit();
+        }
+    }
+
     @Given("^открываю браузер \"([^\"]*)\"$")
     public void openChrome(String browser) {
-//        driver = new WebDriverFactory(TestConfig.getInstance().getBrowser()).createDriver();
         driver = new WebDriverFactory(browser).createDriver();
         System.setProperty("video.folder", "target/video");
         System.setProperty("video.save.mode", "ALL");
@@ -37,7 +50,6 @@ public class StepDefs {
     @Given("^найти на странице курс \"([^\"]*)\"$")
     public void findCourseOnPage(String course) {
         List<WebElement> webElements = driver.findElements(By.xpath("//*[contains(@class,'lessons__new-item-title ') and contains(text(),'" + course + "')]"));
-        System.out.println(course);
         new Actions(driver)
                 .moveToElement(webElements.get(0))
                 .click()
@@ -51,25 +63,19 @@ public class StepDefs {
         List<WebElement> beginDate = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-start\")]"));
         Date afterDate = formatDate(date);
         Map<String, Date> map = new HashMap<>();
-        List<Map<String, Date>> list = new ArrayList<>();
+        Map<String, Date> map1 = new HashMap<>();
         for (int i = 0; i < courses.size(); i++) {
-            map.put(courses.get(i).getText(), formatDate(beginDate.get(i).getText().replace("С ","")));
-            list.add(map);
-       }
-        Map<String, Date> filtredMap = new HashMap<>();
+            map.put(courses.get(i).getText(), formatDate(beginDate.get(i).getText().replace("С ", "")));
+        }
+        map.entrySet().stream().filter(a -> a.getValue().after(afterDate)).forEach(System.out::println);
 
-        list.stream().filter(x-> {
-            long count = 0L;
-            for (Map.Entry<String, Date> entry : x.entrySet()) {
-                if (entry.getValue().after(afterDate)) {
-                    filtredMap.put(entry.getKey(),entry.getValue());
-                    count++;
-                }
+        map.forEach((x, y) -> {
+            if (y.after(afterDate)) {
+                System.out.println("forEach " + x + " " + y);
             }
-            return false;
-        }).forEach(System.out::println);
-        System.out.println("filtredMap "+filtredMap);
-        findCourseOnPage(filtredMap.keySet().stream().findAny().get().toString());
+        });
+
+        findCourseOnPage(map.entrySet().stream().filter(a -> a.getValue().after(afterDate)).findAny().stream().collect(Collectors.toList()).get(0).getKey());
     }
 
     public Date formatDate(String date) throws ParseException {
@@ -82,11 +88,6 @@ public class StepDefs {
         return date1;
     }
 
-    public void getCourses() {
-        List<WebElement> prices = driver.findElements(By.xpath("//*[@class=\"lessons__new-item-price\"]"));
-
-    }
-
     @Given("^перейти в раздел Курсы > Подготовительные курсы и сделать фильтр по дорогим курсам$")
     public void filterExpensiveCourse() {
         WebElement webElement = driver.findElement(By.xpath("(//p[@class=\"header2-menu__item-text\" and text()='Курсы'])[1]"));
@@ -94,16 +95,18 @@ public class StepDefs {
         webElement.findElement(By.xpath("./following::*[@title=\"Подготовительные курсы\"][1]")).click();
         List<WebElement> courses = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-title lessons\")]"));
         List<WebElement> price = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-price\")]"));
-        Map<String,Integer> coursesMap = new HashMap<>();
+        Map<String, Integer> coursesMap = new HashMap<>();
+        List<Map<String, Integer>> coursesList = new ArrayList<>();
 
         for (int i = 0; i < courses.size(); i++) {
-            coursesMap.put(courses.get(i).getText(), Integer.parseInt(price.get(i).getText().replace(" ₽","")));
+            coursesMap.put(courses.get(i).getText(), Integer.parseInt(price.get(i).getText().replace(" ₽", "")));
+            coursesList.add(coursesMap);
         }
 //        System.out.println("coursesMap " + coursesMap);
-        Map.Entry<String,Integer> println = coursesMap.entrySet()
+        Map.Entry<String, Integer> println = coursesMap.entrySet()
                 .stream()
                 .max(comparingInt(Map.Entry::getValue)).get();
-//        System.out.println("println "+println);
+        //        System.out.println("println "+println);
         findCourseOnPage(println.getKey());
     }
 
@@ -114,13 +117,13 @@ public class StepDefs {
         webElement.findElement(By.xpath("./following::*[@title=\"Подготовительные курсы\"][1]")).click();
         List<WebElement> courses = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-title lessons\")]"));
         List<WebElement> price = driver.findElements(By.xpath("//*[contains(@class,\"lessons__new-item-price\")]"));
-        Map<String,Integer> coursesMap = new HashMap<>();
+        Map<String, Integer> coursesMap = new HashMap<>();
 
         for (int i = 0; i < courses.size(); i++) {
-            coursesMap.put(courses.get(i).getText(), Integer.parseInt(price.get(i).getText().replace(" ₽","")));
+            coursesMap.put(courses.get(i).getText(), Integer.parseInt(price.get(i).getText().replace(" ₽", "")));
         }
 //        System.out.println("coursesMap " + coursesMap);
-        Map.Entry<String,Integer> println = coursesMap.entrySet()
+        Map.Entry<String, Integer> println = coursesMap.entrySet()
                 .stream()
                 .min(comparingInt(Map.Entry::getValue)).get();
 //        System.out.println("println "+println);
