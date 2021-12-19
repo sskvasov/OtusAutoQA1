@@ -1,4 +1,4 @@
-package otusAutoQA_HM1;
+package otusAutoQA_HM2.parallel.stepDefs;
 
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.events.WebDriverEventListener;
@@ -17,11 +17,11 @@ public  class Highlighter implements WebDriverEventListener {
     }
 
     public void afterClickOn(WebElement webElement, WebDriver webDriver) {
-        try {
-            unhighlight(webDriver,webElement, "orange");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            unhighlight(webDriver,webElement, "orange");
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public void beforeAlertAccept(WebDriver webDriver) {
@@ -148,10 +148,10 @@ public  class Highlighter implements WebDriverEventListener {
                 transform(driver,element, color, i);
                 sleep(50);
             }
-//            for (int i = 4; i > 0; i--) {
-//                transform(driver,element, color, i);
-//                sleep(50);
-//            }
+            for (int i = 3; i > -1; i--) {
+                transform(driver,element, color, i);
+                sleep(50);
+            }
         }
         return element;
     }
@@ -159,7 +159,7 @@ public  class Highlighter implements WebDriverEventListener {
     public static <T extends WebElement> T unhighlight(WebDriver driver,T element, final String color) throws InterruptedException {
         if (element != null && element.getAttribute("__selenideHighlighting") != null) {
                 transform(driver,element, color, 0);
-                sleep(50);
+                sleep(5000);
         }
         return element;
     }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Test" parallel="tests" thread-count="1">
+    <test name="Regression" annotations="1234">
+        <classes>
+            <class name="otusAutoQA_HM2.parallel.RunCucumberTest"/>
+        </classes>
+    </test>
+</suite>
