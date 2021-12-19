@@ -12,7 +12,10 @@ import org.openqa.selenium.support.events.EventFiringWebDriver;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -64,16 +67,32 @@ public class StepDefs {
         Date afterDate = formatDate(date);
         Map<String, Date> map = new HashMap<>();
         Map<String, Date> map1 = new HashMap<>();
-        for (int i = 0; i < courses.size(); i++) {
-            map.put(courses.get(i).getText(), formatDate(beginDate.get(i).getText().replace("С ", "")));
-        }
-        map.entrySet().stream().filter(a -> a.getValue().after(afterDate)).forEach(System.out::println);
 
-        map.forEach((x, y) -> {
-            if (y.after(afterDate)) {
-                System.out.println("forEach " + x + " " + y);
-            }
-        });
+        /*
+            Примерно. Не уверен в точности написания
+         */
+
+        List<WebElement> sortedList = courses
+                .stream()
+                .filter(val -> {
+                    try {
+                        return formatDate(val.getText().replace("C", "")).after(afterDate);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
+        //        for (int i = 0; i < courses.size(); i++) {
+//            map.put(courses.get(i).getText(), formatDate(beginDate.get(i).getText().replace("С ", "")));
+//        }
+//        map.entrySet().stream().filter(a -> a.getValue().after(afterDate)).forEach(System.out::println);
+//
+//        map.forEach((x, y) -> {
+//            if (y.after(afterDate)) {
+//                System.out.println("forEach " + x + " " + y);
+//            }
+//        });
 
         findCourseOnPage(map.entrySet().stream().filter(a -> a.getValue().after(afterDate)).findAny().stream().collect(Collectors.toList()).get(0).getKey());
     }
